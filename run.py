@@ -3,7 +3,7 @@
 
 """
 CS224N 2022-23: Homework 4
-run.py: Run Script for Simple NMT Model
+run.py: Run Script for Simple NMT_GRU Model
 Pencheng Yin <pcyin@cs.cmu.edu>
 Sahil Chopra <schopra8@stanford.edu>
 Vera Lin <veralin@stanford.edu>
@@ -52,6 +52,7 @@ from docopt import docopt
 # from nltk.translate.bleu_score import corpus_bleu, sentence_bleu, SmoothingFunction
 import sacrebleu
 from nmt_model import Hypothesis, NMT
+from nmt_gru_model import NMT_GRU
 import numpy as np
 from typing import List, Tuple, Dict, Set, Union
 from tqdm import tqdm
@@ -65,7 +66,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 def evaluate_ppl(model, dev_data, batch_size=32):
     """ Evaluate perplexity on dev sentences
-    @param model (NMT): NMT Model
+    @param model (NMT_GRU): NMT_GRU Model
     @param dev_data (list of (src_sent, tgt_sent)): list of tuples containing source and target sentence
     @param batch_size (batch size)
     @returns ppl (perplixty on dev sentences)
@@ -114,7 +115,7 @@ def compute_corpus_level_bleu_score(references: List[List[str]], hypotheses: Lis
 
 
 def train(args: Dict):
-    """ Train the NMT Model.
+    """ Train the NMT_GRU Model.
     @param args (Dict): args from cmd line
     """
     train_data_src = read_corpus(args['--train-src'], source='src', vocab_size=21000)       # EDIT: NEW VOCAB SIZE
@@ -134,12 +135,12 @@ def train(args: Dict):
 
     vocab = Vocab.load(args['--vocab'])
 
-    # model = NMT(embed_size=int(args['--embed-size']),                                 # EDIT: 4X EMBED AND HIDDEN SIZES 
+    # model = NMT_GRU(embed_size=int(args['--embed-size']),                                 # EDIT: 4X EMBED AND HIDDEN SIZES 
     #             hidden_size=int(args['--hidden-size']),
     #             dropout_rate=float(args['--dropout']),
     #             vocab=vocab)
 
-    model = NMT(embed_size=1024,
+    model = NMT_GRU(embed_size=1024,
                 hidden_size=768,
                 dropout_rate=float(args['--dropout']),
                 vocab=vocab)
@@ -296,7 +297,7 @@ def decode(args: Dict[str, str]):
         test_data_tgt = read_corpus(args['TEST_TARGET_FILE'], source='tgt', vocab_size=2000)
 
     print("load model from {}".format(args['MODEL_PATH']), file=sys.stderr)
-    model = NMT.load(args['MODEL_PATH'])
+    model = NMT_GRU.load(args['MODEL_PATH'])
 
     if args['--cuda']:
         model = model.to(torch.device("cuda:0"))
@@ -318,9 +319,9 @@ def decode(args: Dict[str, str]):
             f.write(hyp_sent + '\n')
 
 
-def beam_search(model: NMT, test_data_src: List[List[str]], beam_size: int, max_decoding_time_step: int) -> List[List[Hypothesis]]:
+def beam_search(model: NMT_GRU, test_data_src: List[List[str]], beam_size: int, max_decoding_time_step: int) -> List[List[Hypothesis]]:
     """ Run beam search to construct hypotheses for a list of src-language sentences.
-    @param model (NMT): NMT Model
+    @param model (NMT_GRU): NMT_GRU Model
     @param test_data_src (List[List[str]]): List of sentences (words) in source language, from test set.
     @param beam_size (int): beam_size (# of hypotheses to hold for a translation at every step)
     @param max_decoding_time_step (int): maximum sentence length that Beam search can produce
