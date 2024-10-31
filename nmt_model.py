@@ -30,7 +30,7 @@ class NMT(nn.Module):
         - Global Attention Model (Luong, et al. 2015)
     """
 
-    def __init__(self, embed_size, hidden_size, vocab, dropout_rate=0.2):
+    def __init__(self, embed_size, hidden_size, vocab, dropout_rate=0.2, number_of_encoder_layers=2):
         """ Init NMT Model.
 
         @param embed_size (int): Embedding size (dimensionality)
@@ -44,7 +44,8 @@ class NMT(nn.Module):
         self.hidden_size = hidden_size
         self.dropout_rate = dropout_rate
         self.vocab = vocab
-
+        self.number_of_encoder_layers = number_of_encoder_layers
+        
         # default values
         self.encoder = None
         self.decoder = None
@@ -69,7 +70,7 @@ class NMT(nn.Module):
         ###     self.encoder (Bidirectional LSTM with bias)
         self.encoder=nn.LSTM(input_size=embed_size,
                              hidden_size=hidden_size,
-                             num_layers=1,
+                             num_layers=self.number_of_encoder_layers,
                              bias=True,
                              bidirectional=True)
         ###     self.decoder (LSTM Cell with bias)
@@ -77,11 +78,11 @@ class NMT(nn.Module):
                                  hidden_size=hidden_size,
                                  bias=True)
         ###     self.h_projection (Linear Layer with no bias), called W_{h} in the PDF.
-        self.h_projection = nn.Linear(in_features=2*hidden_size,
+        self.h_projection = nn.Linear(in_features=self.number_of_encoder_layers * 2 * hidden_size,
                                       out_features=hidden_size,
                                       bias=False)
         ###     self.c_projection (Linear Layer with no bias), called W_{c} in the PDF.
-        self.c_projection = nn.Linear(in_features=2*hidden_size,
+        self.c_projection = nn.Linear(in_features=self.number_of_encoder_layers * 2 * hidden_size,
                                       out_features=hidden_size,
                                       bias=False)
         ###     self.att_projection (Linear Layer with no bias), called W_{attProj} in the PDF.
@@ -97,7 +98,7 @@ class NMT(nn.Module):
                                       out_features=len(vocab.tgt),
                                       bias=False)
         ###     self.dropout (Dropout Layer)
-        self.dropout = nn.Dropout(p=0.3)
+        self.dropout = nn.Dropout(p=dropout_rate)
         ###
         ### Use the following docs to properly initialize these variables:
         ###     LSTM:
@@ -207,11 +208,19 @@ class NMT(nn.Module):
         ###             Apply the c_projection layer to this in order to compute init_decoder_cell.
         ###             This is c_0^{dec} in the PDF. Here b = batch size, h = hidden size
         ###
-        
-        last_hidden = torch.cat((last_hidden[0], last_hidden[1]), 1) # (2, b, h) -> (b, 2*h)
+        batch_size = last_hidden.size(1)
+        # last_hidden = last_hidden.view((self.number_of_encoder_layers, 2, batch_size, self.hidden_size))
+        # last_hidden = torch.cat((last_hidden[0], last_hidden[1]), 1) # (2, b, h) -> (b, 2*h)
+        last_hidden = last_hidden.permute((1,0,2)).reshape(batch_size,-1) 
+        # (2*n, b, h) -> (b, 2*n, h) -> (b, 2*n*h)
+        # print(f"projection {self.h_projection.in_features} -> {self.h_projection.out_features}")
+        # print(f"last_hidden {last_hidden.size()}")
         init_decoder_hidden = self.h_projection(last_hidden)
         
-        last_cell = torch.cat((last_cell[0], last_cell[1]), 1) # (2, b, h) -> (b, 2*h)
+        # last_cell = torch.cat((last_cell[0], last_cell[1]), 1) # (2, b, h) -> (b, 2*h)
+        last_cell = last_cell.permute((1,0,2)).reshape(batch_size,-1) 
+        # (2*n, b, h) -> (b, 2*n, h) -> (b, 2*n*h)
+        
         init_decoder_cell = self.c_projection(last_cell)
         
         dec_init_state = (init_decoder_hidden, init_decoder_cell)
