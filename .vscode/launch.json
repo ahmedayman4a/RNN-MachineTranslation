@@ -5,14 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Current File",
+            "name": "Current File",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal"
         },
         {
-            "name": "Python Debugger: Sanity Check 1d",
+            "name": "Sanity Check 1d",
             "type": "debugpy",
             "request": "launch",
             "program": "sanity_check.py",
@@ -20,7 +20,7 @@
             "args": ["1d"]
         },
         {
-            "name": "Python Debugger: Sanity Check 1e",
+            "name": "Sanity Check 1e",
             "type": "debugpy",
             "request": "launch",
             "program": "sanity_check.py",
@@ -28,12 +28,26 @@
             "args": ["1e"]
         },
         {
-            "name": "Python Debugger: Sanity Check 1f",
+            "name": "Sanity Check 1f",
             "type": "debugpy",
             "request": "launch",
             "program": "sanity_check.py",
             "console": "integratedTerminal",
             "args": ["1f"]
+        },
+        {
+            "name": "Train Local",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "run.py",
+            "console": "integratedTerminal",
+            "args": ["train",
+            "--train-src=./zh_en_data/train.zh",
+            "--train-tgt=./zh_en_data/train.en ",
+            "--dev-src=./zh_en_data/dev.zh",
+            "--dev-tgt=./zh_en_data/dev.en",
+            "--vocab=vocab.json",
+            "--lr=5e-5"]
         }
     ]
 }
