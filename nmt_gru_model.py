@@ -478,7 +478,7 @@ class NMT_GRU(nn.Module):
 
             x = torch.cat([y_t_embed, att_tm1], dim=-1)
 
-            (h_t, cell_t), att_t, _ = self.step(x, h_tm1,
+            h_t, att_t, _ = self.step(x, h_tm1,
                                                 exp_src_encodings, exp_src_encodings_att_linear, enc_masks=None)
 
             # log probabilities over target words
